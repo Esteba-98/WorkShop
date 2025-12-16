@@ -1,0 +1,108 @@
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Workshop.Infrastructure.Persistence;
+using Workshop.Application.Services;
+using Workshop.Infrastructure.Services;
+using Microsoft.OpenApi.Models;
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IVehiculoService, VehiculoService>();
+builder.Services.AddScoped<IProductoService, ProductoService>();
+builder.Services.AddScoped<IMantenimientoService, MantenimientoService>();
+
+// Registrar DbContext con PostgreSQL
+builder.Services.AddDbContext<WorkshopDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Registrar servicios de aplicación
+builder.Services.AddScoped<IClienteService, ClienteService>();
+
+// Registrar Identity
+builder.Services.AddIdentity<AppUser, AppRole>()
+    .AddEntityFrameworkStores<WorkshopDbContext>()
+    .AddDefaultTokenProviders();
+
+// Configuración de JWT
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+        )
+    };
+});
+
+//Swagger con seguridad JWT
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Workshop.Api", Version = "v1" });
+
+    // Configuración de seguridad para JWT
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Introduce el token JWT con el prefijo 'Bearer '.\nEjemplo: Bearer eyJhbGciOiJIUzI1NiIs..."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+var app = builder.Build();
+
+// Middleware
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    // Redirigir raíz → Swagger
+    app.MapGet("/", () => Results.Redirect("/swagger"));
+}
+
+app.UseHttpsRedirection();
+
+// Muy importante: primero autenticación, luego autorización
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

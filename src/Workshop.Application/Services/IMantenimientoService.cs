@@ -1,0 +1,13 @@
+﻿using Workshop.Application.DTOs.Mantenimientos;
+
+namespace Workshop.Application.Services
+{
+    public interface IMantenimientoService
+    {
+        Task<List<MantenimientoDto>> GetAllAsync();
+        Task<MantenimientoDto?> GetByIdAsync(Guid id);
+        Task<MantenimientoDto> CreateAsync(CreateMantenimientoDto dto);
+        Task<MantenimientoDto?> UpdateAsync(UpdateMantenimientoDto dto);
+        Task<bool> DeleteAsync(Guid id);
+    }
+}
