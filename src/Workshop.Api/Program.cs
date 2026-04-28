@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -49,11 +49,15 @@ namespace Workshop.Api
                 };
             });
 
+            var allowedOrigins = builder.Configuration
+                .GetSection("AllowedOrigins").Get<string[]>()
+                ?? new[] { "http://localhost:4200" };
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200")
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                 });
@@ -93,14 +97,12 @@ namespace Workshop.Api
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-                app.MapGet("/", () => Results.Redirect("/swagger"));
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
-            app.UseHttpsRedirection();
+            app.MapGet("/", () => Results.Redirect("/swagger"));
+            app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
             app.UseCors("AllowFrontend");
             app.UseAuthentication();
             app.UseAuthorization();
