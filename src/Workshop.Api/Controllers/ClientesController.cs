@@ -7,61 +7,52 @@ namespace Workshop.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Todos requieren estar logueados, pero con roles afinamos permisos
-    public class ClientesController : ControllerBase
+    [Authorize]
+    public class ClienteController : ControllerBase
     {
         private readonly IClienteService _clienteService;
 
-        public ClientesController(IClienteService clienteService)
+        public ClienteController(IClienteService clienteService)
         {
             _clienteService = clienteService;
         }
 
-        // Cualquier rol logueado puede ver la lista de clientes
         [HttpGet]
-        public async Task<ActionResult<List<ClienteDto>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            return Ok(await _clienteService.GetAllAsync());
+            var clientes = await _clienteService.GetAllAsync();
+            return Ok(clientes);
         }
 
-        // Cualquier rol logueado puede ver un cliente específico
         [HttpGet("{id}")]
-        public async Task<ActionResult<ClienteDto>> GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id)
         {
             var cliente = await _clienteService.GetByIdAsync(id);
             if (cliente == null) return NotFound();
             return Ok(cliente);
         }
 
-        // SOLO el Administrador puede crear clientes
-        [Authorize(Roles = "Administrador")]
         [HttpPost]
-        public async Task<ActionResult<ClienteDto>> Create(CreateClienteDto dto)
+        public async Task<IActionResult> Create([FromBody] CreateClienteDto dto)
         {
             var cliente = await _clienteService.CreateAsync(dto);
-            return Ok(cliente);
+            return CreatedAtAction(nameof(GetById), new { id = cliente.Id }, cliente);
         }
 
-        // SOLO el Administrador puede actualizar clientes
-        [Authorize(Roles = "Administrador")]
         [HttpPut("{id}")]
-        public async Task<ActionResult<ClienteDto>> Update(Guid id, UpdateClienteDto dto)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateClienteDto dto)
         {
             if (id != dto.Id) return BadRequest();
-
             var cliente = await _clienteService.UpdateAsync(dto);
             if (cliente == null) return NotFound();
-
             return Ok(cliente);
         }
 
-        // SOLO el Administrador puede eliminar clientes
-        [Authorize(Roles = "Administrador")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            var deleted = await _clienteService.DeleteAsync(id);
-            if (!deleted) return NotFound();
+            var result = await _clienteService.DeleteAsync(id);
+            if (!result) return NotFound();
             return NoContent();
         }
     }

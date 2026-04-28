@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Workshop.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Workshop.Infrastructure.Persistence;
 namespace Workshop.Infrastructure.Migrations
 {
     [DbContext(typeof(WorkshopDbContext))]
-    partial class WorkshopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427163418_AddMecanicoIdToMantenimiento")]
+    partial class AddMecanicoIdToMantenimiento
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,14 +163,6 @@ namespace Workshop.Infrastructure.Migrations
                     b.Property<Guid>("ClienteId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Descripcion")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Diagnostico")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasColumnType("text");
@@ -175,19 +170,8 @@ namespace Workshop.Infrastructure.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("FechaEntrega")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Folio")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<Guid?>("MecanicoId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Observaciones")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid>("VehiculoId")
                         .HasColumnType("uuid");
@@ -213,19 +197,11 @@ namespace Workshop.Infrastructure.Migrations
                     b.Property<Guid>("MantenimientoId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<decimal>("PrecioUnitario")
                         .HasColumnType("numeric");
 
-                    b.Property<Guid?>("ProductoId")
+                    b.Property<Guid>("ProductoId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -471,7 +447,9 @@ namespace Workshop.Infrastructure.Migrations
 
                     b.HasOne("Workshop.Domain.Entities.Producto", "Producto")
                         .WithMany("MantenimientoItems")
-                        .HasForeignKey("ProductoId");
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Mantenimiento");
 

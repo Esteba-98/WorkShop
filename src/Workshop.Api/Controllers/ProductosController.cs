@@ -35,7 +35,7 @@ namespace Workshop.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,OperarioAlmacen")]
         public async Task<IActionResult> Create([FromBody] CreateProductoDto dto)
         {
             var producto = await _productoService.CreateAsync(dto);
@@ -53,12 +53,37 @@ namespace Workshop.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,OperarioAlmacen")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var deleted = await _productoService.DeleteAsync(id);
             if (!deleted) return NotFound();
             return NoContent();
+        }
+
+        [HttpGet("plantilla")]
+        [Authorize(Roles = "Administrador,OperarioAlmacen")]
+        public async Task<IActionResult> DescargarPlantilla()
+        {
+            var bytes = await _productoService.GenerarPlantillaAsync();
+            return File(bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "plantilla_productos.xlsx");
+        }
+
+        [HttpPost("importar")]
+        [Authorize(Roles = "Administrador,OperarioAlmacen")]
+        public async Task<IActionResult> Importar(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No se recibió ningún archivo.");
+
+            if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("El archivo debe tener formato .xlsx");
+
+            using var stream = file.OpenReadStream();
+            var resultado = await _productoService.ImportarAsync(stream);
+            return Ok(resultado);
         }
     }
 }

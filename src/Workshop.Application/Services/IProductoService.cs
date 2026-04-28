@@ -9,5 +9,7 @@ namespace Workshop.Application.Services
         Task<ProductoDto> CreateAsync(CreateProductoDto dto);
         Task<ProductoDto?> UpdateAsync(UpdateProductoDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<byte[]> GenerarPlantillaAsync();
+        Task<ImportarResultadoDto> ImportarAsync(Stream excelStream);
     }
 }

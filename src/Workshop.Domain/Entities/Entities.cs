@@ -1,4 +1,4 @@
-﻿namespace Workshop.Domain.Entities;
+namespace Workshop.Domain.Entities;
 
 public class Cliente
 {
@@ -20,7 +20,6 @@ public class Vehiculo
     public Guid ClienteId { get; set; }
     public Cliente Cliente { get; set; } = null!;
 
-    // 🔹 Relación inversa
     public ICollection<Mantenimiento> Mantenimientos { get; set; } = new List<Mantenimiento>();
 }
 
@@ -32,7 +31,6 @@ public class Producto
     public decimal Precio { get; set; }
     public int Stock { get; set; }
 
-    // 🔹 Relación inversa opcional
     public ICollection<MantenimientoItem> MantenimientoItems { get; set; } = new List<MantenimientoItem>();
 }
 
@@ -40,14 +38,30 @@ public class Mantenimiento
 {
     public Guid Id { get; set; }
 
+    // Folio autoincremental: OT-0001, OT-0002...
+    public string Folio { get; set; } = "";
+
     public Guid ClienteId { get; set; }
     public Cliente Cliente { get; set; } = null!;
 
     public Guid VehiculoId { get; set; }
     public Vehiculo Vehiculo { get; set; } = null!;
 
+    public Guid? MecanicoId { get; set; }
+
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
-    public string Estado { get; set; } = "Abierto";
+    public DateTime? FechaEntrega { get; set; }
+
+    public string Estado { get; set; } = "Pendiente";
+
+    // Descripción del trabajo solicitado por el cliente
+    public string Descripcion { get; set; } = "";
+
+    // Diagnóstico del mecánico
+    public string Diagnostico { get; set; } = "";
+
+    // Observaciones adicionales
+    public string Observaciones { get; set; } = "";
 
     public ICollection<MantenimientoItem> Items { get; set; } = new List<MantenimientoItem>();
 }
@@ -59,12 +73,18 @@ public class MantenimientoItem
     public Guid MantenimientoId { get; set; }
     public Mantenimiento Mantenimiento { get; set; } = null!;
 
-    public Guid ProductoId { get; set; }
-    public Producto Producto { get; set; } = null!;
+    // Tipo: "Producto" o "Servicio"
+    public string Tipo { get; set; } = "Producto";
 
-    public int Cantidad { get; set; }
+    // Nombre del item (para servicios manuales o referencia del producto)
+    public string Nombre { get; set; } = "";
+
+    // Solo se asigna si el item es un producto del almacén
+    public Guid? ProductoId { get; set; }
+    public Producto? Producto { get; set; }
+
+    public int Cantidad { get; set; } = 1;
     public decimal PrecioUnitario { get; set; }
 
-    // 🔹 Campo calculado
     public decimal Subtotal => Cantidad * PrecioUnitario;
 }

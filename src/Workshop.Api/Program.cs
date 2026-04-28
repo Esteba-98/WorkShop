@@ -8,101 +8,106 @@ using Workshop.Application.Services;
 using Workshop.Infrastructure.Services;
 using Microsoft.OpenApi.Models;
 
-
-var builder = WebApplication.CreateBuilder(args);
-
-
-builder.Services.AddScoped<IClienteService, ClienteService>();
-builder.Services.AddScoped<IVehiculoService, VehiculoService>();
-builder.Services.AddScoped<IProductoService, ProductoService>();
-builder.Services.AddScoped<IMantenimientoService, MantenimientoService>();
-
-// Registrar DbContext con PostgreSQL
-builder.Services.AddDbContext<WorkshopDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Registrar servicios de aplicación
-builder.Services.AddScoped<IClienteService, ClienteService>();
-
-// Registrar Identity
-builder.Services.AddIdentity<AppUser, AppRole>()
-    .AddEntityFrameworkStores<WorkshopDbContext>()
-    .AddDefaultTokenProviders();
-
-// Configuración de JWT
-builder.Services.AddAuthentication(options =>
+namespace Workshop.Api
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    public class Program
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-        )
-    };
-});
-
-//Swagger con seguridad JWT
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Workshop.Api", Version = "v1" });
-
-    // Configuración de seguridad para JWT
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Introduce el token JWT con el prefijo 'Bearer '.\nEjemplo: Bearer eyJhbGciOiJIUzI1NiIs..."
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        public static void Main(string[] args)
         {
-            new OpenApiSecurityScheme
+            var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddScoped<IClienteService, ClienteService>();
+            builder.Services.AddScoped<IVehiculoService, VehiculoService>();
+            builder.Services.AddScoped<IProductoService, ProductoService>();
+            builder.Services.AddScoped<IMantenimientoService, MantenimientoService>();
+
+            builder.Services.AddDbContext<WorkshopDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddIdentity<AppUser, AppRole>()
+                .AddEntityFrameworkStores<WorkshopDbContext>()
+                .AddDefaultTokenProviders();
+
+            builder.Services.AddAuthentication(options =>
             {
-                Reference = new OpenApiReference
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+                    )
+                };
+            });
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Workshop.Api", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Introduce el token JWT con el prefijo 'Bearer '.\nEjemplo: Bearer eyJhbGciOiJIUzI1NiIs..."
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
+
+            var app = builder.Build();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+                app.MapGet("/", () => Results.Redirect("/swagger"));
+            }
+
+            app.UseHttpsRedirection();
+            app.UseCors("AllowFrontend");
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapControllers();
+
+            app.Run();
         }
-    });
-});
-
-var app = builder.Build();
-
-// Middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-
-    // Redirigir raíz → Swagger
-    app.MapGet("/", () => Results.Redirect("/swagger"));
+    }
 }
-
-app.UseHttpsRedirection();
-
-// Muy importante: primero autenticación, luego autorización
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();

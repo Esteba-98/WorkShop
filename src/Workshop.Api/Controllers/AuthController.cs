@@ -37,7 +37,10 @@ public class AuthController : ControllerBase
         var result = await _userManager.CreateAsync(user, dto.Password);
 
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        {
+            var errores = result.Errors.Select(e => e.Description);
+            return BadRequest(new { message = string.Join(" ", errores) });
+        }
 
         //Usar el rol enviado, o "User" si no se envía
         var role = string.IsNullOrWhiteSpace(dto.Role) ? "User" : dto.Role;
@@ -91,6 +94,7 @@ public class AuthController : ControllerBase
 
         return Ok(new AuthResponseDto
         {
+            Id = user.Id.ToString(),
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             UserName = user.UserName!,
             Email = user.Email!,

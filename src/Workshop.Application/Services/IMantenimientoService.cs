@@ -1,4 +1,4 @@
-﻿using Workshop.Application.DTOs.Mantenimientos;
+using Workshop.Application.DTOs.Mantenimientos;
 
 namespace Workshop.Application.Services
 {
@@ -9,5 +9,9 @@ namespace Workshop.Application.Services
         Task<MantenimientoDto> CreateAsync(CreateMantenimientoDto dto);
         Task<MantenimientoDto?> UpdateAsync(UpdateMantenimientoDto dto);
         Task<bool> DeleteAsync(Guid id);
+
+        // Items de la orden
+        Task<MantenimientoDto?> AddItemAsync(Guid mantenimientoId, AddItemDto dto);
+        Task<MantenimientoDto?> RemoveItemAsync(Guid mantenimientoId, Guid itemId);
     }
 }

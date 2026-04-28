@@ -23,6 +23,7 @@ namespace Workshop.Infrastructure.Services
                     Id = c.Id,
                     Nombre = c.Nombre,
                     Email = c.Email,
+                    Telefono = c.Telefono
                 })
                 .ToListAsync();
         }
@@ -37,6 +38,7 @@ namespace Workshop.Infrastructure.Services
                 Id = cliente.Id,
                 Nombre = cliente.Nombre,
                 Email = cliente.Email,
+                Telefono = cliente.Telefono
             };
         }
 
@@ -47,6 +49,7 @@ namespace Workshop.Infrastructure.Services
                 Id = Guid.NewGuid(),
                 Nombre = dto.Nombre,
                 Email = dto.Email,
+                Telefono = dto.Telefono
             };
 
             _context.Clientes.Add(cliente);
@@ -56,7 +59,8 @@ namespace Workshop.Infrastructure.Services
             {
                 Id = cliente.Id,
                 Nombre = cliente.Nombre,
-                Email = cliente.Email
+                Email = cliente.Email,
+                Telefono = cliente.Telefono
             };
         }
 
@@ -67,6 +71,7 @@ namespace Workshop.Infrastructure.Services
 
             cliente.Nombre = dto.Nombre;
             cliente.Email = dto.Email;
+            cliente.Telefono = dto.Telefono;
 
             await _context.SaveChangesAsync();
 
@@ -74,7 +79,8 @@ namespace Workshop.Infrastructure.Services
             {
                 Id = cliente.Id,
                 Nombre = cliente.Nombre,
-                Email = cliente.Email
+                Email = cliente.Email,
+                Telefono = cliente.Telefono
             };
         }
 

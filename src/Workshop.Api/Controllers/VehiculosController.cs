@@ -18,14 +18,14 @@ namespace Workshop.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador,Mecanico")]
+        [Authorize(Roles = "Administrador,Mecanico,User")]
         public async Task<IActionResult> GetAll()
         {
             return Ok(await _vehiculoService.GetAllAsync());
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Administrador,Mecanico")]
+        [Authorize(Roles = "Administrador,Mecanico,User")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var vehiculo = await _vehiculoService.GetByIdAsync(id);
@@ -34,7 +34,7 @@ namespace Workshop.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,User")]
         public async Task<IActionResult> Create([FromBody] CreateVehiculoDto dto)
         {
             var vehiculo = await _vehiculoService.CreateAsync(dto);
@@ -42,7 +42,7 @@ namespace Workshop.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,User")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVehiculoDto dto)
         {
             if (id != dto.Id) return BadRequest();
