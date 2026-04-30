@@ -20,6 +20,7 @@ namespace Workshop.Api
             builder.Services.AddScoped<IVehiculoService, VehiculoService>();
             builder.Services.AddScoped<IProductoService, ProductoService>();
             builder.Services.AddScoped<IMantenimientoService, MantenimientoService>();
+            builder.Services.AddScoped<IStatsService, StatsService>();
 
             builder.Services.AddDbContext<WorkshopDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

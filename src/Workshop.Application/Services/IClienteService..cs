@@ -1,5 +1,5 @@
 ﻿using Workshop.Application.DTOs.Clientes;
-using Workshop.Domain.Entities;
+using Workshop.Application.DTOs.Historial;
 
 namespace Workshop.Application.Services
 {
@@ -10,5 +10,6 @@ namespace Workshop.Application.Services
         Task<ClienteDto> CreateAsync(CreateClienteDto dto);
         Task<ClienteDto?> UpdateAsync(UpdateClienteDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<ClienteHistorialDto?> GetHistorialAsync(Guid id);
     }
 }

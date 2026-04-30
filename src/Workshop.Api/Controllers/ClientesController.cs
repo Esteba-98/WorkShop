@@ -55,5 +55,13 @@ namespace Workshop.Api.Controllers
             if (!result) return NotFound();
             return NoContent();
         }
+
+        [HttpGet("{id}/historial")]
+        public async Task<IActionResult> GetHistorial(Guid id)
+        {
+            var historial = await _clienteService.GetHistorialAsync(id);
+            if (historial == null) return NotFound();
+            return Ok(historial);
+        }
     }
 }

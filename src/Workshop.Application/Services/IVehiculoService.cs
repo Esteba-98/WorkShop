@@ -1,4 +1,5 @@
 ﻿using Workshop.Application.DTOs.Vehiculos;
+using Workshop.Application.DTOs.Historial;
 
 namespace Workshop.Application.Services
 {
@@ -9,5 +10,6 @@ namespace Workshop.Application.Services
         Task<VehiculoDto> CreateAsync(CreateVehiculoDto dto);
         Task<VehiculoDto?> UpdateAsync(UpdateVehiculoDto dto);
         Task<bool> DeleteAsync(Guid id);
+        Task<VehiculoHistorialDto?> GetHistorialAsync(Guid id);
     }
 }

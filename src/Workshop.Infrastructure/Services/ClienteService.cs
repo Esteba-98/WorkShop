@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Workshop.Application.DTOs.Clientes;
+using Workshop.Application.DTOs.Historial;
 using Workshop.Application.Services;
 using Workshop.Domain.Entities;
 using Workshop.Infrastructure.Persistence;
@@ -92,6 +93,57 @@ namespace Workshop.Infrastructure.Services
             _context.Clientes.Remove(cliente);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<ClienteHistorialDto?> GetHistorialAsync(Guid id)
+        {
+            var cliente = await _context.Clientes
+                .Include(c => c.Vehiculos)
+                    .ThenInclude(v => v.Mantenimientos)
+                        .ThenInclude(m => m.Items)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (cliente == null) return null;
+
+            var vehiculos = cliente.Vehiculos.Select(v =>
+            {
+                var ordenes = v.Mantenimientos
+                    .OrderByDescending(m => m.Fecha)
+                    .Select(m => new OrdenResumenDto
+                    {
+                        Id = m.Id,
+                        Folio = m.Folio,
+                        Fecha = m.Fecha,
+                        FechaEntrega = m.FechaEntrega,
+                        Estado = m.Estado,
+                        Descripcion = m.Descripcion,
+                        TotalItems = m.Items.Count,
+                        Total = m.Items.Sum(i => i.Subtotal)
+                    })
+                    .ToList();
+
+                return new VehiculoEnHistorialDto
+                {
+                    Id = v.Id,
+                    Placa = v.Placa,
+                    Marca = v.Marca,
+                    Modelo = v.Modelo,
+                    Anio = v.Anio,
+                    TotalOrdenes = ordenes.Count,
+                    Ordenes = ordenes
+                };
+            }).ToList();
+
+            return new ClienteHistorialDto
+            {
+                Id = cliente.Id,
+                Nombre = cliente.Nombre,
+                Email = cliente.Email,
+                Telefono = cliente.Telefono,
+                TotalOrdenes = vehiculos.Sum(v => v.TotalOrdenes),
+                TotalFacturado = vehiculos.Sum(v => v.Ordenes.Sum(o => o.Total)),
+                Vehiculos = vehiculos
+            };
         }
     }
 }

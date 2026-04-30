@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Workshop.Application.DTOs.Vehiculos;
+using Workshop.Application.DTOs.Historial;
 using Workshop.Application.Services;
 using Workshop.Domain.Entities;
 using Workshop.Infrastructure.Persistence;
@@ -104,6 +105,46 @@ namespace Workshop.Infrastructure.Services
             _context.Vehiculos.Remove(vehiculo);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<VehiculoHistorialDto?> GetHistorialAsync(Guid id)
+        {
+            var vehiculo = await _context.Vehiculos
+                .Include(v => v.Cliente)
+                .Include(v => v.Mantenimientos)
+                    .ThenInclude(m => m.Items)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vehiculo == null) return null;
+
+            var ordenes = vehiculo.Mantenimientos
+                .OrderByDescending(m => m.Fecha)
+                .Select(m => new OrdenResumenDto
+                {
+                    Id = m.Id,
+                    Folio = m.Folio,
+                    Fecha = m.Fecha,
+                    FechaEntrega = m.FechaEntrega,
+                    Estado = m.Estado,
+                    Descripcion = m.Descripcion,
+                    TotalItems = m.Items.Count,
+                    Total = m.Items.Sum(i => i.Subtotal)
+                })
+                .ToList();
+
+            return new VehiculoHistorialDto
+            {
+                Id = vehiculo.Id,
+                Placa = vehiculo.Placa,
+                Marca = vehiculo.Marca,
+                Modelo = vehiculo.Modelo,
+                Anio = vehiculo.Anio,
+                ClienteNombre = vehiculo.Cliente?.Nombre ?? "",
+                ClienteTelefono = vehiculo.Cliente?.Telefono ?? "",
+                TotalOrdenes = ordenes.Count,
+                TotalFacturado = ordenes.Sum(o => o.Total),
+                Ordenes = ordenes
+            };
         }
     }
 }

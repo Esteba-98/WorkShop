@@ -59,5 +59,14 @@ namespace Workshop.Api.Controllers
             if (!deleted) return NotFound();
             return NoContent();
         }
+
+        [HttpGet("{id}/historial")]
+        [Authorize(Roles = "Administrador,Mecanico,User")]
+        public async Task<IActionResult> GetHistorial(Guid id)
+        {
+            var historial = await _vehiculoService.GetHistorialAsync(id);
+            if (historial == null) return NotFound();
+            return Ok(historial);
+        }
     }
 }
