@@ -98,6 +98,13 @@ namespace Workshop.Api
 
             var app = builder.Build();
 
+            // Aplicar migraciones pendientes automáticamente al iniciar
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<WorkshopDbContext>();
+                db.Database.Migrate();
+            }
+
             app.UseSwagger();
             app.UseSwaggerUI();
 
