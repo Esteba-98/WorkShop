@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Workshop.Application.DTOs.Mantenimientos;
@@ -198,6 +199,54 @@ namespace Workshop.Infrastructure.Services
             mantenimiento.Pagado = !mantenimiento.Pagado;
             await _context.SaveChangesAsync();
             return await MapDto(mantenimiento);
+        }
+
+        public async Task<byte[]> ExportExcelAsync(DateTime? desde, DateTime? hasta)
+        {
+            var query = QueryConRelaciones();
+            if (desde.HasValue)
+                query = query.Where(m => m.Fecha >= DateTime.SpecifyKind(desde.Value, DateTimeKind.Utc));
+            if (hasta.HasValue)
+                query = query.Where(m => m.Fecha <= DateTime.SpecifyKind(hasta.Value.AddDays(1), DateTimeKind.Utc));
+
+            var lista = await query.OrderByDescending(m => m.Fecha).ToListAsync();
+
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("Órdenes");
+
+            string[] headers = { "Folio", "Fecha", "Estado", "Pagado", "Cliente", "Teléfono", "Vehículo", "Placa", "Mecánico", "Total" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(1, i + 1);
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F97316");
+                cell.Style.Font.FontColor = XLColor.White;
+            }
+
+            int row = 2;
+            foreach (var m in lista)
+            {
+                var dto = await MapDto(m);
+                ws.Cell(row, 1).Value = dto.Folio;
+                ws.Cell(row, 2).Value = dto.Fecha.ToString("dd/MM/yyyy");
+                ws.Cell(row, 3).Value = dto.Estado;
+                ws.Cell(row, 4).Value = dto.Pagado ? "Sí" : "No";
+                ws.Cell(row, 5).Value = dto.ClienteNombre;
+                ws.Cell(row, 6).Value = dto.ClienteTelefono;
+                ws.Cell(row, 7).Value = $"{dto.VehiculoMarca} {dto.VehiculoModelo} {dto.VehiculoAnio}";
+                ws.Cell(row, 8).Value = dto.VehiculoPlaca;
+                ws.Cell(row, 9).Value = dto.MecanicoNombre ?? "";
+                ws.Cell(row, 10).Value = (double)dto.Total;
+                ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0";
+                row++;
+            }
+
+            ws.Columns().AdjustToContents();
+
+            using var ms = new MemoryStream();
+            workbook.SaveAs(ms);
+            return ms.ToArray();
         }
 
         public async Task<MantenimientoDto?> RemoveItemAsync(Guid mantenimientoId, Guid itemId)

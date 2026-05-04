@@ -80,6 +80,16 @@ namespace Workshop.Api.Controllers
             return Ok(m);
         }
 
+        // GET /api/Mantenimientos/export/excel — exportar a Excel (solo Admin)
+        [HttpGet("export/excel")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ExportExcel([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
+        {
+            var bytes = await _mantenimientoService.ExportExcelAsync(desde, hasta);
+            var filename = $"ordenes_{DateTime.Now:yyyyMMdd}.xlsx";
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+        }
+
         // PATCH /api/Mantenimientos/{id}/pagado — toggle estado de pago (solo Admin)
         [HttpPatch("{id}/pagado")]
         [Authorize(Roles = "Administrador")]

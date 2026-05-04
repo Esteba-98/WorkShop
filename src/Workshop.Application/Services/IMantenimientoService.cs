@@ -16,5 +16,8 @@ namespace Workshop.Application.Services
 
         // Pago
         Task<MantenimientoDto?> TogglePagadoAsync(Guid id);
+
+        // Exportación
+        Task<byte[]> ExportExcelAsync(DateTime? desde, DateTime? hasta);
     }
 }
