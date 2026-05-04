@@ -28,6 +28,7 @@ namespace Workshop.Application.DTOs.Mantenimientos
         public DateTime Fecha { get; set; }
         public DateTime? FechaEntrega { get; set; }
         public string Estado { get; set; } = "";
+        public bool Pagado { get; set; }
         public string Descripcion { get; set; } = "";
         public string Diagnostico { get; set; } = "";
         public string Observaciones { get; set; } = "";

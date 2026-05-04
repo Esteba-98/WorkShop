@@ -54,6 +54,8 @@ public class Mantenimiento
 
     public string Estado { get; set; } = "Pendiente";
 
+    public bool Pagado { get; set; } = false;
+
     // Descripción del trabajo solicitado por el cliente
     public string Descripcion { get; set; } = "";
 

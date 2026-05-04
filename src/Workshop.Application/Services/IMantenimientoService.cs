@@ -13,5 +13,8 @@ namespace Workshop.Application.Services
         // Items de la orden
         Task<MantenimientoDto?> AddItemAsync(Guid mantenimientoId, AddItemDto dto);
         Task<MantenimientoDto?> RemoveItemAsync(Guid mantenimientoId, Guid itemId);
+
+        // Pago
+        Task<MantenimientoDto?> TogglePagadoAsync(Guid id);
     }
 }

@@ -69,6 +69,9 @@ public class AuthController : ControllerBase
         if (user == null || !(await _userManager.CheckPasswordAsync(user, dto.Password)))
             return Unauthorized("Credenciales inválidas");
 
+        if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+            return Unauthorized("Usuario desactivado. Contacta al administrador.");
+
         var roles = await _userManager.GetRolesAsync(user);
 
         var claims = new List<Claim>

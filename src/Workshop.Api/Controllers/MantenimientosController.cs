@@ -79,5 +79,15 @@ namespace Workshop.Api.Controllers
             if (m == null) return NotFound();
             return Ok(m);
         }
+
+        // PATCH /api/Mantenimientos/{id}/pagado — toggle estado de pago (solo Admin)
+        [HttpPatch("{id}/pagado")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> TogglePagado(Guid id)
+        {
+            var m = await _mantenimientoService.TogglePagadoAsync(id);
+            if (m == null) return NotFound();
+            return Ok(m);
+        }
     }
 }

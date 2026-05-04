@@ -38,7 +38,8 @@ namespace Workshop.Api.Controllers
                     id = u.Id,
                     nombre = u.Nombre,
                     email = u.Email,
-                    rol = roles.FirstOrDefault() ?? "User"
+                    rol = roles.FirstOrDefault() ?? "User",
+                    activo = !(u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow)
                 });
             }
             return Ok(result);
@@ -121,6 +122,21 @@ namespace Workshop.Api.Controllers
                 return BadRequest(new { message = string.Join(" ", errores) });
             }
             return Ok(new { message = "Contraseña actualizada." });
+        }
+
+        // PATCH /api/Users/{id}/toggle-activo — activar/desactivar usuario (solo Administrador)
+        [HttpPatch("{id}/toggle-activo")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ToggleActivo(Guid id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user == null) return NotFound();
+
+            var desactivado = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+            await _userManager.SetLockoutEnabledAsync(user, true);
+            await _userManager.SetLockoutEndDateAsync(user, desactivado ? null : DateTimeOffset.MaxValue);
+
+            return Ok(new { activo = desactivado }); // devuelve el nuevo estado
         }
 
         // DELETE /api/Users/{id} — eliminar usuario del sistema (solo Administrador)

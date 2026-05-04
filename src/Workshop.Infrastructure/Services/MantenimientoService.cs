@@ -53,6 +53,7 @@ namespace Workshop.Infrastructure.Services
             Fecha = m.Fecha,
             FechaEntrega = m.FechaEntrega,
             Estado = m.Estado,
+            Pagado = m.Pagado,
             Descripcion = m.Descripcion,
             Diagnostico = m.Diagnostico,
             Observaciones = m.Observaciones,
@@ -188,6 +189,15 @@ namespace Workshop.Infrastructure.Services
 
             var actualizado = await QueryConRelaciones().FirstAsync(x => x.Id == mantenimientoId);
             return await MapDto(actualizado);
+        }
+
+        public async Task<MantenimientoDto?> TogglePagadoAsync(Guid id)
+        {
+            var mantenimiento = await QueryConRelaciones().FirstOrDefaultAsync(x => x.Id == id);
+            if (mantenimiento == null) return null;
+            mantenimiento.Pagado = !mantenimiento.Pagado;
+            await _context.SaveChangesAsync();
+            return await MapDto(mantenimiento);
         }
 
         public async Task<MantenimientoDto?> RemoveItemAsync(Guid mantenimientoId, Guid itemId)
