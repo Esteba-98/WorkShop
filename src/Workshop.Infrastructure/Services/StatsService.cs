@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Workshop.Application.DTOs.Stats;
 using Workshop.Application.Services;
+using Workshop.Domain.Entities;
 using Workshop.Infrastructure.Persistence;
 
 namespace Workshop.Infrastructure.Services
@@ -8,10 +10,12 @@ namespace Workshop.Infrastructure.Services
     public class StatsService : IStatsService
     {
         private readonly WorkshopDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public StatsService(WorkshopDbContext context)
+        public StatsService(WorkshopDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<DashboardStatsDto> GetDashboardStatsAsync(string periodo = "mes")
@@ -44,6 +48,12 @@ namespace Workshop.Infrastructure.Services
                 .Sum(i => i.Subtotal);
 
             var stockBajo = productos.Count(p => p.Stock <= 5);
+
+            var ordenesVencidas = mantenimientos.Count(m =>
+                m.FechaEntrega.HasValue &&
+                m.FechaEntrega.Value < now &&
+                m.Estado != "Completado" &&
+                m.Estado != "Cancelado");
 
             var porEstado = new PorEstadoDto
             {
@@ -79,9 +89,50 @@ namespace Workshop.Infrastructure.Services
                 IngresosMes = ingresosMes,
                 StockBajo = stockBajo,
                 MantenimientosPendientes = porEstado.Pendiente,
+                OrdenesVencidas = ordenesVencidas,
                 PorEstado = porEstado,
                 UltimaSemana = ultimaSemana
             };
         }
+
+        public async Task<List<MecanicoStatsDto>> GetMecanicoStatsAsync(string periodo = "mes")
+        {
+            var now = DateTime.UtcNow;
+            var inicio = periodo switch
+            {
+                "semana" => now.AddDays(-7),
+                "anio"   => new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                "todo"   => DateTime.MinValue,
+                _        => new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+            };
+
+            var mecanicos = await _userManager.GetUsersInRoleAsync("Mecanico");
+
+            var ordenes = await _context.Mantenimientos
+                .Include(m => m.Items)
+                .Where(m => m.MecanicoId != null && m.Fecha >= inicio)
+                .ToListAsync();
+
+            var result = new List<MecanicoStatsDto>();
+            foreach (var mec in mecanicos)
+            {
+                var propias = ordenes.Where(m => m.MecanicoId == mec.Id).ToList();
+                result.Add(new MecanicoStatsDto
+                {
+                    MecanicoId = mec.Id.ToString(),
+                    MecanicoNombre = mec.Nombre,
+                    TotalOrdenes = propias.Count,
+                    Completadas = propias.Count(m => m.Estado == "Completado"),
+                    EnProceso = propias.Count(m => m.Estado == "En Proceso"),
+                    Ingresos = propias
+                        .Where(m => m.Estado == "Completado")
+                        .SelectMany(m => m.Items)
+                        .Sum(i => i.Subtotal)
+                });
+            }
+
+            return result.OrderByDescending(m => m.TotalOrdenes).ToList();
+        }
     }
 }
+

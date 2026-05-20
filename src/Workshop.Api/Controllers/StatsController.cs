@@ -21,5 +21,13 @@ namespace Workshop.Api.Controllers
         {
             return Ok(await _statsService.GetDashboardStatsAsync(periodo));
         }
+
+        // GET /api/Stats/mecanicos — reporte por mecánico (solo Admin)
+        [HttpGet("mecanicos")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> GetMecanicos([FromQuery] string periodo = "mes")
+        {
+            return Ok(await _statsService.GetMecanicoStatsAsync(periodo));
+        }
     }
 }

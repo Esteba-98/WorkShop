@@ -16,6 +16,7 @@ namespace Workshop.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddScoped<ITallerConfigService, TallerConfigService>();
             builder.Services.AddScoped<IClienteService, ClienteService>();
             builder.Services.AddScoped<IVehiculoService, VehiculoService>();
             builder.Services.AddScoped<IProductoService, ProductoService>();

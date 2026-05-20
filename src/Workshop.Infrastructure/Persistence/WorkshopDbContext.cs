@@ -14,6 +14,7 @@ namespace Workshop.Infrastructure.Persistence
         public DbSet<Producto> Productos { get; set; }
         public DbSet<Mantenimiento> Mantenimientos { get; set; }
         public DbSet<MantenimientoItem> MantenimientoItems { get; set; }
+        public DbSet<TallerConfig> TallerConfigs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

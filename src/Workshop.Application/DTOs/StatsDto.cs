@@ -20,6 +20,9 @@ namespace Workshop.Application.DTOs.Stats
 
         // Órdenes últimos 7 días
         public List<OrdenesDelDiaDto> UltimaSemana { get; set; } = new();
+
+        // HU-11: Alertas de órdenes vencidas (FechaEntrega pasada, no completadas)
+        public int OrdenesVencidas { get; set; }
     }
 
     public class PorEstadoDto
@@ -34,5 +37,15 @@ namespace Workshop.Application.DTOs.Stats
     {
         public string Dia { get; set; } = "";
         public int Count { get; set; }
+    }
+
+    public class MecanicoStatsDto
+    {
+        public string MecanicoId { get; set; } = "";
+        public string MecanicoNombre { get; set; } = "";
+        public int TotalOrdenes { get; set; }
+        public int Completadas { get; set; }
+        public int EnProceso { get; set; }
+        public decimal Ingresos { get; set; }
     }
 }
